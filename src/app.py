@@ -32,19 +32,22 @@ def get_roles():
 @app.route('/create_employee/', methods=['POST'])
 def create_employee():
     # регистрация пользователя
-    tg_chat_id = request.json['tg_chat_id'],
-    name = request.json['name'],
-    last_name = request.json['last_name'],
-    department = request.json['department'],
-    role = request.json["role"],
+    tg_chat_id = request.json['tg_chat_id']
+    name = request.json['name']
+    last_name = request.json['last_name']
+    department = request.json['department']
+    role = request.json["role"]
+
     employee = {"tg_chat_id": tg_chat_id,
                 "name": name,
                 "last_name": last_name,
-                "department": [department[0]],
-                "role": [role[0]]
+                "department": department,
+                "role": role
                 }
-    employee = mongo.db.employee.update({'tg_chat_id': employee['tg_chat_id']}, {"$set": employee}, upsert=True)
-    employee['role'] = role[0]['name']
+
+    employee = mongo.db.employee.update({'tg_chat_id': employee['tg_chat_id']},
+                                        {"$set": employee}, upsert=True)
+    employee['role'] = role[0]["name"]
     response = json_util.dumps(employee)
 
     return Response(response, mimetype='application/json')
@@ -61,23 +64,16 @@ def get_departments():
 @app.route('/get_staff_by_manager/', methods=['POST'])
 def get_staff_by_manager():
     # все сотрудники отдела исключая менеджера
-    department = request.json['department'],
-    tg_chat_id = request.json['tg_chat_id'],
+    department = request.json['department']
+    tg_chat_id = request.json['tg_chat_id']
+    print(tg_chat_id)
     staff = mongo.db.employee.find(
-        {"department": SON([("name", department[0])]),
-         "tg_chat_id": {"$ne": tg_chat_id[0]}})
+        {"department": SON([("name", department)]),
+         "tg_chat_id": {"$ne": tg_chat_id}})
     response = json_util.dumps(staff)
+    print(response)
+    print("response--")
     return Response(response, mimetype='application/json')
-
-
-def serialize_tag(manager_id, employee_id, title, comment, deadline):
-    return {
-        'author': {"tg_chat_id": manager_id[0]},
-        'maker': {"tg_chat_id": employee_id[0]},
-        'title': title[0],
-        'comment': comment[0],
-        'deadline': deadline
-    }
 
 
 def get_deadline(deadline):
@@ -87,26 +83,23 @@ def get_deadline(deadline):
 
 @app.route('/create_task/', methods=['POST'])
 def create_task():
-    manager_id = request.json.get('manager_id').get('tg_chat_id'),
-    employee_id = request.json.get('employee_id').get('tg_chat_id'),
+    manager_id = request.json.get('manager_id'),
+    employee_id = request.json.get('employee_id'),
     title = request.json.get('title'),
     comment = request.json.get('comment'),
     deadline = request.json.get('deadline')
-
     deadline_time = get_deadline(deadline)
-    print(deadline_time)
-    print(type(deadline_time))
-    print('-------')
-    serialized_task = serialize_tag(manager_id, employee_id, title, comment, deadline_time)
 
-    print(serialized_task)
-    print('serialized_task---------')
+    serialize_task = {"title": title[0],
+                      "comment": comment[0],
+                      "author": [manager_id[0]],
+                      "maker": [employee_id[0]],
+                      "deadline": deadline_time
+                      }
 
-    task = mongo.db.task.update({}, {"$set": serialized_task}, upsert=True)
-    print(task)
-
+    task = mongo.db.task.update({}, {"$set": serialize_task}, upsert=True)
     response = json_util.dumps(task)
-    Response(response, mimetype='application/json')
+    return Response(response, mimetype='application/json')
 
 
 if __name__ == '__main__':

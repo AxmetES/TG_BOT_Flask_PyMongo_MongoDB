@@ -1,7 +1,5 @@
-manager_id: object
-tg_chat_id: 421935954
-employee_id: object
-tg_chat_id: "333333"
-title: "title"
-comment: "text"
-deadline: "неделя"
+{"department": [{"name": "отдел кадров"}],
+ "last_name": "manson",
+ "name": "charls",
+ "role": [{"name": "user"}],
+ "tg_chat_id": "4444"}
